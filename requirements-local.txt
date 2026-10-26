@@ -1,0 +1,4 @@
+# Requirements for running faceyesmile.py locally on desktop with webcam
+opencv-python
+mediapipe
+numpy

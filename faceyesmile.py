@@ -7,14 +7,14 @@ indicators, plus EAR-based PERCLOS for fatigue and jaw-open for yawning.
 No TensorFlow/DeepFace needed.
 
 SETUP (inside your Python venv):
-    pip install opencv-python mediapipe numpy
+    pip install -r requirements-local.txt
 
 You also need the face_landmarker model file (~3.7MB), placed in the
 SAME FOLDER as this script:
     Invoke-WebRequest -Uri "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task" -OutFile "face_landmarker.task"
 
-Run:
-    python fatigue_monitor_blendshapes.py
+Run locally:
+    python faceyesmile.py
 Press 'q' to quit.
 """
 

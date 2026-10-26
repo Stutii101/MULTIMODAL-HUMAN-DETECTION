@@ -1,3 +1,3 @@
-﻿opencv-python
-mediapipe
-numpy
+# Production dependencies for Vercel Serverless Deployment
+# The Python API (api/index.py) uses standard library modules (http.server, json, urllib, time).
+# For local desktop OpenCV & webcam execution with faceyesmile.py, see requirements-local.txt.

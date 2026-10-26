@@ -6,3 +6,5 @@ env/
 .env
 .vscode/
 *.log
+.vercel
+.env*

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multimodal Human Fatigue & Alertness Detection</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo-badge">AI CV</div>
+        <div>
+          <h1 class="project-title">MULTIMODAL HUMAN DETECTION</h1>
+          <p class="project-subtitle">Real-Time Facial Landmark, Fatigue & Alertness Monitoring System</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="status-pill" id="api-status-pill">
+          <span class="status-dot warning" id="api-status-dot"></span>
+          <span id="api-status-text">Python API: Checking...</span>
+        </div>
+        <div class="status-pill" id="model-status-pill">
+          <span class="status-dot warning" id="model-status-dot"></span>
+          <span id="model-status-text">Model: Loading...</span>
+        </div>
+        <a href="https://github.com/Stutii101/MULTIMODAL-HUMAN-DETECTION" target="_blank" rel="noopener noreferrer" class="btn-github">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          GitHub
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Live Workspace Grid -->
+    <main class="main-grid">
+      <!-- Left Column: Video Feed & Live OpenCV-style Viewport -->
+      <section class="viewport-section card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2 class="card-title">Live Vision Feed</h2>
+            <span class="badge" id="fps-badge">0 FPS</span>
+          </div>
+          <div class="controls-toolbar">
+            <button class="btn btn-primary" id="btn-toggle-camera">
+              <span class="btn-icon">📹</span>
+              <span id="btn-camera-label">Start Webcam</span>
+            </button>
+            <button class="btn btn-secondary" id="btn-toggle-mesh" title="Toggle Landmark Mesh">
+              <span>Mesh</span>: <strong id="mesh-state-label">ON</strong>
+            </button>
+            <button class="btn btn-secondary" id="btn-toggle-sound" title="Toggle Sound Alerts">
+              <span>Sound</span>: <strong id="sound-state-label">OFF</strong>
+            </button>
+          </div>
+        </div>
+
+        <div class="viewport-container" id="viewport-container">
+          <!-- Video element (hidden, source for MediaPipe) -->
+          <video id="webcam-video" playsinline muted autoplay style="display: none;"></video>
+          
+          <!-- Canvas element (renders camera frames + OpenCV overlay + landmarks) -->
+          <canvas id="output-canvas"></canvas>
+
+          <!-- Placeholder when camera is inactive -->
+          <div class="viewport-placeholder" id="viewport-placeholder">
+            <div class="placeholder-icon">👁️</div>
+            <h3>Camera Inactive</h3>
+            <p>Click "Start Webcam" to launch real-time 30 FPS facial fatigue monitoring, or try a sample scenario below.</p>
+            <div class="sample-actions">
+              <button class="btn btn-outline" id="btn-sample-alert">Test Alert Face</button>
+              <button class="btn btn-outline" id="btn-sample-smile">Test Smile Face</button>
+              <button class="btn btn-outline" id="btn-sample-yawn">Test Yawning Face</button>
+              <button class="btn btn-outline" id="btn-sample-drowsy">Test High Fatigue</button>
+            </div>
+            <div class="upload-box">
+              <label for="image-upload-input" class="upload-label">
+                <span>📁 Upload Image to Test Face Detection</span>
+              </label>
+              <input type="file" id="image-upload-input" accept="image/*" style="display:none;">
+            </div>
+          </div>
+
+          <!-- High Fatigue Warning Overlay Banner -->
+          <div class="alert-banner" id="alert-banner">
+            <div class="alert-banner-content">
+              <span class="alert-icon">⚠️</span>
+              <div class="alert-text">
+                <strong>CRITICAL ALERT: HIGH FATIGUE DETECTED!</strong>
+                <p>Prolonged eye closure (PERCLOS) and yawn/distress indicators exceeded safety threshold.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry Summary Bar below Video -->
+        <div class="viewport-footer">
+          <div class="metric-chip">
+            <span class="chip-label">EAR</span>
+            <span class="chip-value" id="hud-ear">--</span>
+          </div>
+          <div class="metric-chip">
+            <span class="chip-label">PERCLOS (30s)</span>
+            <span class="chip-value" id="hud-perclos">--%</span>
+          </div>
+          <div class="metric-chip">
+            <span class="chip-label">Smile Score</span>
+            <span class="chip-value" id="hud-smile">--</span>
+          </div>
+          <div class="metric-chip">
+            <span class="chip-label">Yawn Score</span>
+            <span class="chip-value" id="hud-yawn">--</span>
+          </div>
+          <div class="metric-chip">
+            <span class="chip-label">Sorrow Score</span>
+            <span class="chip-value" id="hud-sorrow">--</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Live Fatigue Cockpit, Metrics, & Serverless API -->
+      <section class="metrics-section">
+        <!-- Main Fatigue Fusion Dial Card -->
+        <div class="card fatigue-card">
+          <div class="card-header">
+            <h2 class="card-title">Multimodal Fatigue Fusion</h2>
+            <span class="badge" id="risk-badge">IDLE</span>
+          </div>
+          
+          <div class="fatigue-gauge-container">
+            <div class="gauge-ring-wrapper">
+              <svg class="gauge-svg" viewBox="0 0 200 200">
+                <circle class="gauge-bg" cx="100" cy="100" r="85"></circle>
+                <circle class="gauge-fill" id="gauge-fill-circle" cx="100" cy="100" r="85"></circle>
+              </svg>
+              <div class="gauge-inner-content">
+                <span class="gauge-number" id="fatigue-score-value">0</span>
+                <span class="gauge-label">FATIGUE SCORE</span>
+                <span class="gauge-scale">/ 100</span>
+              </div>
+            </div>
+
+            <div class="gauge-legend">
+              <div class="legend-item"><span class="legend-color normal"></span> 0 - 39: Alert / Normal</div>
+              <div class="legend-item"><span class="legend-color warning"></span> 40 - 69: Moderate Fatigue</div>
+              <div class="legend-item"><span class="legend-color danger"></span> 70 - 100: High Fatigue Alert</div>
+            </div>
+          </div>
+
+          <div class="formula-box">
+            <div class="formula-title">Mathematical Fusion Logic (from <code>faceyesmile.py</code>):</div>
+            <div class="formula-code">
+              Score = min(100, (PERCLOS × 60) + (20 if Yawn else 0) + (10 if Sorrow else 0))
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Detailed Metric Cards -->
+        <div class="metrics-grid">
+          <!-- Eye Aspect Ratio (EAR) -->
+          <div class="card metric-card">
+            <div class="metric-header">
+              <span class="metric-title">Eye Aspect Ratio (EAR)</span>
+              <span class="metric-state" id="ear-state">NORMAL</span>
+            </div>
+            <div class="metric-main-value" id="ear-val">0.00</div>
+            <div class="metric-bar-bg">
+              <div class="metric-bar-fill" id="ear-bar" style="width: 0%;"></div>
+            </div>
+            <div class="metric-subtext">Threshold: <strong>0.21</strong> (6 landmarks per eye)</div>
+          </div>
+
+          <!-- PERCLOS Metric -->
+          <div class="card metric-card">
+            <div class="metric-header">
+              <span class="metric-title">PERCLOS (30s Window)</span>
+              <span class="metric-state" id="perclos-state">0%</span>
+            </div>
+            <div class="metric-main-value" id="perclos-val">0.0%</div>
+            <div class="metric-bar-bg">
+              <div class="metric-bar-fill warning" id="perclos-bar" style="width: 0%;"></div>
+            </div>
+            <div class="metric-subtext">% time eyes closed over rolling 30 seconds</div>
+          </div>
+
+          <!-- Smile Detection -->
+          <div class="card metric-card">
+            <div class="metric-header">
+              <span class="metric-title">Smile Expression</span>
+              <span class="metric-state" id="smile-state">NO</span>
+            </div>
+            <div class="metric-main-value" id="smile-val">0.00</div>
+            <div class="metric-bar-bg">
+              <div class="metric-bar-fill success" id="smile-bar" style="width: 0%;"></div>
+            </div>
+            <div class="metric-subtext">Threshold: <strong>0.40</strong> (mouthSmile blendshapes)</div>
+          </div>
+
+          <!-- Yawn & Sorrow Detection -->
+          <div class="card metric-card">
+            <div class="metric-header">
+              <span class="metric-title">Yawn & Sorrow</span>
+              <span class="metric-state" id="yawn-state">NO</span>
+            </div>
+            <div class="metric-main-value" id="yawn-val">0.00</div>
+            <div class="metric-bar-bg">
+              <div class="metric-bar-fill danger" id="yawn-bar" style="width: 0%;"></div>
+            </div>
+            <div class="metric-subtext">Jaw open (&gt;0.40) &amp; Frown+Brow (&gt;0.30)</div>
+          </div>
+        </div>
+
+        <!-- Session Statistics -->
+        <div class="card stats-card">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-number" id="stat-blinks">0</span>
+              <span class="stat-name">Blinks Detected</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="stat-yawns">0</span>
+              <span class="stat-name">Yawn Events</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="stat-alerts">0</span>
+              <span class="stat-name">Fatigue Alerts</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="stat-time">00:00</span>
+              <span class="stat-name">Session Time</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Python Serverless API Integration Widget -->
+        <div class="card api-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h2 class="card-title">Python Serverless Backend</h2>
+              <span class="badge badge-success">Vercel API</span>
+            </div>
+            <button class="btn btn-sm btn-outline" id="btn-test-api">Test /api/analyze</button>
+          </div>
+          <p class="api-description">
+            Telemetry metrics can be synced to the live Vercel Python serverless endpoint (<code>api/index.py</code>) for server-side logging and diagnostic scoring verification.
+          </p>
+          <div class="api-response-viewer" id="api-response-viewer">
+            <div class="viewer-header">
+              <span>Endpoint: <code id="api-endpoint-label">GET /api/health</code></span>
+              <span class="badge" id="api-status-badge">200 OK</span>
+            </div>
+            <pre class="json-code" id="api-json-output">{\n  "status": "healthy",\n  "project": "MULTIMODAL-HUMAN-DETECTION",\n  "system": "Python Vercel Serverless"\n}</pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Architecture & Technical Explanation Section -->
+    <section class="card docs-section">
+      <h2 class="card-title">System Architecture & Deployment Specifications</h2>
+      <div class="docs-grid">
+        <div class="docs-card">
+          <h3>⚡ Real-Time Client Vision Engine</h3>
+          <p>
+            Runs Google MediaPipe Vision Tasks (<code>FaceLandmarker</code>) via WebAssembly and WebGL directly in the user's browser.
+            This ensures zero network latency (30 FPS), complete privacy (camera frames never leave your computer), and direct hardware webcam integration.
+          </p>
+        </div>
+        <div class="docs-card">
+          <h3>🐍 Python Serverless Backend</h3>
+          <p>
+            The live Vercel serverless function at <code>api/index.py</code> handles telemetry ingestion, scoring formulas, and health checks over HTTPS.
+            It provides standardized REST endpoints (<code>/api/health</code> and <code>/api/analyze</code>) with CORS support.
+          </p>
+        </div>
+        <div class="docs-card">
+          <h3>💻 Preserved Desktop OpenCV Script</h3>
+          <p>
+            The original desktop OpenCV application (<code>faceyesmile.py</code>) is completely preserved in the repository.
+            Users who prefer a local terminal application with desktop GUI popups can run it via <code>python faceyesmile.py</code> with <code>requirements-local.txt</code>.
+          </p>
+        </div>
+      </div>
+      <footer class="footer">
+        <p>Project: <strong>MULTIMODAL-HUMAN-DETECTION</strong> &bull; Author: <strong>Stuti Dwivedi</strong> &bull; Deployed on <strong>Vercel</strong></p>
+      </footer>
+    </section>
+  </div>
+
+  <!-- Audio element for audio alert chime -->
+  <audio id="alert-sound" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Load MediaPipe Tasks Vision & Application Script -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
